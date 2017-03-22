@@ -1,9 +1,11 @@
 import numpy
-from scipy.optimize import brentq
+from scipy.optimize import brentq, newton
 
 class sr_rmhd_gamma_law(object):
     """
     Resistive case, following Kiki's thesis/paper
+    
+    Note: here we evolve q, which KD says is not the stable way to work.
     """
     
     def __init__(self, initial_data, gamma = 5/3, sigma = 0):
@@ -162,8 +164,10 @@ class sr_rmhd_gamma_law(object):
             
             v2 = numpy.sum(prim_old[1:4, i]**2)
             W = 1 / numpy.sqrt(1 - v2)
-            omega = prim_old[0, i] * (1 + self.gamma * prim_old[4, i]) * W**2
-            omega = brentq(self.cons_fn, 1e-10, 1e10,
+            omega_guess = prim_old[0, i] * (1 + self.gamma * prim_old[4, i]) * W**2
+#            omega = brentq(self.cons_fn, 1e-10, 1e10,
+#                           args = (D, tautilde, S2tilde))
+            omega = newton(self.cons_fn, omega_guess,
                            args = (D, tautilde, S2tilde))
             v2 = S2tilde / omega**2
             W = 1 / numpy.sqrt(1 - v2)

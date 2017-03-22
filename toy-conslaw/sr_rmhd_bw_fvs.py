@@ -5,7 +5,7 @@ from models import sr_rmhd
 from bcs import outflow
 from simulation import simulation
 from methods import fvs_method
-from rk import rk3
+from rk import imex222, rk3
 from grid import grid
 from matplotlib import pyplot
 
@@ -35,8 +35,10 @@ qL = numpy.array([rhoL, 0, vyL, vzL, epsL, Bx , ByL , BzL, 0, 0, 0, 0 ])
 qR = numpy.array([rhoR, 0, vyR, vzR, epsR, Bx , ByR , BzR, 0, 0, 0, 0 ])
 model = sr_rmhd.sr_rmhd_gamma_law(initial_data = sr_rmhd.initial_riemann(qL, qR),
                                 gamma=gamma, sigma=sigma)
+fast_source  = model.relaxation_source()
 
-sim = simulation(model, interval, fvs_method(2), rk3, outflow, cfl=0.5)
+sim = simulation(model, interval, fvs_method(2), imex222(fast_source), 
+                 outflow, cfl=0.25)
 sim.evolve(0.4)
 sim.plot_system()
 pyplot.show()

@@ -8,20 +8,21 @@ class sr_rmhd_gamma_law(object):
     Note: here we evolve q, which KD says is not the stable way to work.
     """
     
-    def __init__(self, initial_data, gamma = 5/3, sigma = 0):
+    def __init__(self, initial_data, gamma = 5/3, sigma = 0.0, kappa = 1.0):
         self.gamma = gamma
         self.sigma = sigma
-        self.Nvars = 12
-        self.Nprim = 12
+        self.kappa = kappa
+        self.Nvars = 13
+        self.Nprim = 13
         self.Naux = 11
         self.initial_data = initial_data
         self.prim_names = (r"$\rho$", r"$v_x$", r"$v_y$", r"$v_z$",
                            r"$\epsilon$",
                            r"$B_x$", r"$B_y$", r"$B_z$",
-                           r"$E_x$", r"$E_y$", r"$E_z$", r"$q$")
+                           r"$E_x$", r"$E_y$", r"$E_z$", r"$q$", r"$\psi$")
         self.cons_names = (r"$D$", r"$S_x$", r"$S_y$", r"$S_z$", r"$\tau$",
                            r"$B_x$", r"$B_y$", r"$B_z$",
-                           r"$E_x$", r"$E_y$", r"$E_z$", r"$q$")
+                           r"$E_x$", r"$E_y$", r"$E_z$", r"$q$", r"$\psi$")
         self.aux_names = (r"$p$", r"$W$", r"$h$", r"$B^2$", r"$E^2$",
                           r"$\epsilon_{xjk} E^j B^k$",
                           r"$\epsilon_{yjk} E^j B^k$",
@@ -43,6 +44,7 @@ class sr_rmhd_gamma_law(object):
         Ey  = prim[9, :]
         Ez  = prim[10, :]
         q   = prim[11, :]
+        psi = prim[12, :]
         v2 = vx**2 + vy**2 + vz**2
         W = 1 / numpy.sqrt(1 - v2)
         p = (self.gamma - 1) * rho * eps
@@ -65,6 +67,7 @@ class sr_rmhd_gamma_law(object):
         cons[9, :] = Ey
         cons[10, :] = Ez
         cons[11, :] = q
+        cons[12, :] = psi
         return cons
         
     def prim2all(self, prim):
@@ -80,6 +83,7 @@ class sr_rmhd_gamma_law(object):
         Ey  = prim[9, :]
         Ez  = prim[10, :]
         q   = prim[11, :]
+        psi = prim[12, :]
         v2 = vx**2 + vy**2 + vz**2
         W = 1 / numpy.sqrt(1 - v2)
         p = (self.gamma - 1) * rho * eps
@@ -106,6 +110,7 @@ class sr_rmhd_gamma_law(object):
         cons[9, :] = Ey
         cons[10, :] = Ez
         cons[11, :] = q
+        cons[12, :] = psi
         aux = numpy.zeros((self.Naux, prim.shape[1]))
         aux[0, :] = p
         aux[1, :] = W
@@ -151,6 +156,7 @@ class sr_rmhd_gamma_law(object):
             Ey  = cons[9, i]
             Ez  = cons[10, i]
             q  = cons[11, i]
+            psi = cons[12, i]
             B2 = Bx * Bx + By * By + Bz * Bz
             E2 = Ex * Ex + Ey * Ey + Ez * Ez
             EcrossB_x = Ey * Bz - Ez * By
@@ -190,6 +196,7 @@ class sr_rmhd_gamma_law(object):
             prim[9, i] = Ey
             prim[10, i] = Ez
             prim[11, i] = q
+            prim[12, i] = psi
             aux[0, i] = p
             aux[1, i] = W
             aux[2, i] = h
@@ -242,10 +249,11 @@ class sr_rmhd_gamma_law(object):
         f[5, :] = 0 # Bx
         f[6, :] = -Ez
         f[7, :] =  Ey
-        f[8, :] = 0 #Ex
+        f[8, :] = 0 + cons[12, :] #Ex
         f[9, :] =  Bz
         f[10, :] = -By
         f[11, :] = Jx
+        f[12, :] = Ex
         return f
         
     def fix_cons(self, cons):
@@ -273,11 +281,12 @@ class sr_rmhd_gamma_law(object):
         def fast_source(cons, prim, aux):
             s = numpy.zeros_like(cons)
             s[8:11, :] = -aux[8:11, :]
+            s[12, :] = cons[11, :] - self.kappa * cons[12, :]
             return s
         return fast_source
         
 
 def initial_riemann(ql, qr):
     return lambda x : numpy.where(x < 0.0,
-                                  ql[:,numpy.newaxis]*numpy.ones((12,len(x))),
-                                  qr[:,numpy.newaxis]*numpy.ones((12,len(x))))
+                                  ql[:,numpy.newaxis]*numpy.ones((13,len(x))),
+                                  qr[:,numpy.newaxis]*numpy.ones((13,len(x))))

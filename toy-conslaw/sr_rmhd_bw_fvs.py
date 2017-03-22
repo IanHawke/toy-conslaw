@@ -31,8 +31,8 @@ gamma = 5/3
 sigma = 0
 epsL = pL / rhoL / (gamma - 1)
 epsR = pR / rhoR / (gamma - 1)
-qL = numpy.array([rhoL, 0, vyL, vzL, epsL, Bx , ByL , BzL, 0, 0, 0, 0 ])
-qR = numpy.array([rhoR, 0, vyR, vzR, epsR, Bx , ByR , BzR, 0, 0, 0, 0 ])
+qL = numpy.array([rhoL, 0, vyL, vzL, epsL, Bx , ByL , BzL, 0, 0, 0, 0, 0 ])
+qR = numpy.array([rhoR, 0, vyR, vzR, epsR, Bx , ByR , BzR, 0, 0, 0, 0, 0 ])
 model = sr_rmhd.sr_rmhd_gamma_law(initial_data = sr_rmhd.initial_riemann(qL, qR),
                                 gamma=gamma, sigma=sigma)
 fast_source  = model.relaxation_source()

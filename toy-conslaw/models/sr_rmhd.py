@@ -291,6 +291,10 @@ class sr_rmhd_gamma_law(object):
 #            s[12, :] = cons[11, :] - self.kappa * cons[12, :]
             return s
         return fast_source
+    
+    def source_fprime(self, cons, prim, aux):
+        jac = numpy.zeros((cons.shape[0], cons.shape[0]))
+        raise(NotImplementedError)
         
 
 def initial_riemann(ql, qr):

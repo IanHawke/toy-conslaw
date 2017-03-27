@@ -48,7 +48,7 @@ def rk_backward_euler_split(rk_method, source):
         return numpy.reshape(consnext, cons.shape)
     return timestepper
 
-def imex222(source):
+def imex222(source, source_fprime=None):
     gamma = 1 - 1/numpy.sqrt(2)
     def residual1(consguess, dt, cons, prim, simulation):
         consguess = consguess.reshape((cons.shape[0], 1))
@@ -60,6 +60,12 @@ def imex222(source):
         if numpy.any(numpy.isnan(res)):
             res = 1e6 * numpy.ones_like(consguess)
         return res.ravel()
+    def residual1_prime(consguess, dt, cons, prim, simulation):
+        consguess = consguess.reshape((cons.shape[0], 1))
+        jac = numpy.eye(cons.shape[0])
+        primguess, auxguess = simulation.model.cons2all(consguess, prim)
+        jac -= dt * gamma * source_fprime(consguess, primguess, auxguess)
+        return jac
     def residual2(consguess, dt, cons, prim, k1, source1, simulation):
         consguess = consguess.reshape((cons.shape[0], 1))
         cons = cons.reshape((cons.shape[0], 1))
@@ -72,6 +78,16 @@ def imex222(source):
         if numpy.any(numpy.isnan(res)):
             res = 1e6 * numpy.ones_like(consguess)
         return res
+    def residual2_prime(consguess, dt, cons, prim, k1, source1, simulation):
+        """
+        Whilst the result is idential to residual1_prime, the argument list
+        is of course different
+        """
+        consguess = consguess.reshape((cons.shape[0], 1))
+        jac = numpy.eye(cons.shape[0])
+        primguess, auxguess = simulation.model.cons2all(consguess, prim)
+        jac -= dt * gamma * source_fprime(consguess, primguess, auxguess)
+        return jac
     def timestepper(simulation, cons, prim, aux):
         Np = cons.shape[1]
         dt = simulation.dt
@@ -79,7 +95,8 @@ def imex222(source):
         consguess = cons.copy()
         cons1 = numpy.zeros_like(cons)
         for i in range(Np):
-            cons1[:,i] = fsolve(residual1, consguess[:,i], 
+            cons1[:,i] = fsolve(residual1, consguess[:,i],
+                                fprime=residual1_prime,
                                 args=(dt, cons[:,i], prim[:,i], simulation))
         cons1 = simulation.bcs(cons1, simulation.grid.Npoints, simulation.grid.Ngz)
         prim1, aux1 = simulation.model.cons2all(cons1, prim)
@@ -87,8 +104,9 @@ def imex222(source):
         source1 = source(cons1, prim1, aux1)
         cons2 = numpy.zeros_like(cons)
         for i in range(Np):
-            cons2[:,i] = fsolve(residual2, cons1[:,i], 
-                           args=(dt, cons[:,i], prim1[:,i], k1, source1[:,i], simulation))
+            cons2[:,i] = fsolve(residual2, cons1[:,i],
+                                fprime=residual1_prime, 
+                                args=(dt, cons[:,i], prim1[:,i], k1, source1[:,i], simulation))
         cons2 = simulation.bcs(cons2, simulation.grid.Npoints, simulation.grid.Ngz)
         prim2, aux2 = simulation.model.cons2all(cons2, prim1)
         k2 = rhs(cons2, prim2, aux2, simulation)

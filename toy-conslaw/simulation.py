@@ -24,6 +24,7 @@ class simulation(object):
         self.aux  = self.aux0.copy() 
         self.t = 0
         self.fix_cons = getattr(model, "fix_cons", None)
+        self.source_fprime = getattr(model, "source_fprime", None)
         
     def evolve_step(self, t_end):
         alpha = self.model.max_lambda(self.cons, self.prim, self.aux)

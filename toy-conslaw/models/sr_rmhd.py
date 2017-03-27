@@ -274,6 +274,13 @@ class sr_rmhd_gamma_law(object):
         """
         raise NotImplementedError('Exact Riemann solver is too expensive.')
         
+    def source(self):
+        def slow_source(cons, prim, aux):
+            s = numpy.zeros_like(cons)
+            s[12, :] = cons[11, :] - self.kappa * cons[12, :]
+            return s
+        return slow_source
+        
     def relaxation_source(self):
         """
         Simple isotropic case
@@ -281,7 +288,7 @@ class sr_rmhd_gamma_law(object):
         def fast_source(cons, prim, aux):
             s = numpy.zeros_like(cons)
             s[8:11, :] = -aux[8:11, :]
-            s[12, :] = cons[11, :] - self.kappa * cons[12, :]
+#            s[12, :] = cons[11, :] - self.kappa * cons[12, :]
             return s
         return fast_source
         

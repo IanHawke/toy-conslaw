@@ -58,7 +58,7 @@ def imex222(source):
         res = consguess - cons - dt * gamma * source(consguess, 
                                                      primguess, auxguess)
         if numpy.any(numpy.isnan(res)):
-            res = 1e6
+            res = 1e6 * numpy.ones_like(consguess)
         return res.ravel()
     def residual2(consguess, dt, cons, prim, k1, source1, simulation):
         consguess = consguess.reshape((cons.shape[0], 1))
@@ -70,7 +70,7 @@ def imex222(source):
         res = (consguess - cons - dt * (k1 + (1 - 2*gamma)*source1 + \
             gamma*source(consguess, primguess, auxguess))).ravel()
         if numpy.any(numpy.isnan(res)):
-            res = 1e6
+            res = 1e6 * numpy.ones_like(consguess)
         return res
     def timestepper(simulation, cons, prim, aux):
         Np = cons.shape[1]

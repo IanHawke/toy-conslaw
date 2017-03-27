@@ -13,16 +13,6 @@ class euler_gamma_law(object):
         self.cons_names = (r"$\rho$", r"$\rho v$", r"$E$")
         self.aux_names = (r"$p$",)
         
-    def prim2cons(self, prim):
-        rho = prim[0, :]
-        v   = prim[1, :]
-        eps = prim[2, :]
-        cons = numpy.zeros_like(prim)
-        cons[0, :] = rho
-        cons[1, :] = rho * v
-        cons[2, :] = rho * (0.5 * v**2 + eps)
-        return cons
-        
     def prim2all(self, prim):
         rho = prim[0, :]
         v   = prim[1, :]

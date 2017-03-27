@@ -16,8 +16,8 @@ def rea_method(reconstruction, flux_solver):
 def rea_method_prim(reconstruction, flux_solver):
     def rea_solver(cons, prim, aux, simulation):
         prim_m, prim_p = reconstruction(prim, simulation)
-        cons_m = simulation.model.prim2cons(prim_m)
-        cons_p = simulation.model.prim2cons(prim_p)
+        cons_m = simulation.model.prim2all(prim_m)[0]
+        cons_p = simulation.model.prim2all(prim_p)[0]
         flux = flux_solver(cons_m, cons_p, simulation)
         rhs = numpy.zeros_like(flux)
         rhs[:,1:-1] = 1/simulation.dx * (flux[:,1:-1] - flux[:,2:])

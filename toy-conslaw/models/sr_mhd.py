@@ -20,38 +20,6 @@ class sr_mhd_gamma_law(object):
                           r"$B^{(4)}_x$", r"$B^{(4)}_y$", r"$B^{(4)}_z$",
                           r"$B^{(4)}$", r"$p_{tot}$", r"$h_{tot}$")
         
-    def prim2cons(self, prim):
-        rho = prim[0, :]
-        vx  = prim[1, :]
-        vy  = prim[2, :]
-        vz  = prim[3, :]
-        eps = prim[4, :]
-        Bx  = prim[5, :]
-        By  = prim[6, :]
-        Bz  = prim[7, :]
-        v2 = vx**2 + vy**2 + vz**2
-        W = 1 / numpy.sqrt(1 - v2)
-        p = (self.gamma - 1) * rho * eps
-        h = 1 + eps + p / rho
-#        cs = numpy.sqrt(self.gamma * (self.gamma - 1) * eps / (1 + self.gamma * eps))
-        B4_0 = W * (Bx * vx + By * vy + Bz * vz)
-        B4_x = Bx / W + B4_0 * vx
-        B4_y = By / W + B4_0 * vy
-        B4_z = Bz / W + B4_0 * vz
-        B4 = (Bx**2 + By**2 + Bz**2) / W**2 + (Bx * vx + By * vy + Bz * vz)**2
-        p_tot = p + B4 / 2
-        h_tot = h + B4 / rho
-        cons = numpy.zeros_like(prim)
-        cons[0, :] = rho * W
-        cons[1, :] = rho * h_tot * W**2 * vx - B4_0 * B4_x
-        cons[2, :] = rho * h_tot * W**2 * vy - B4_0 * B4_y
-        cons[3, :] = rho * h_tot * W**2 * vz - B4_0 * B4_z
-        cons[4, :] = rho * h_tot * W**2 - p_tot - rho * W - B4_0**2
-        cons[5, :] = Bx
-        cons[6, :] = By
-        cons[7, :] = Bz
-        return cons
-        
     def prim2all(self, prim):
         rho = prim[0, :]
         vx  = prim[1, :]

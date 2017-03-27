@@ -23,6 +23,7 @@ class simulation(object):
         self.cons = self.cons0.copy()
         self.aux  = self.aux0.copy() 
         self.t = 0
+        self.fix_cons = getattr(model, "fix_cons", None)
         
     def evolve_step(self, t_end):
         alpha = self.model.max_lambda(self.cons, self.prim, self.aux)
@@ -32,8 +33,8 @@ class simulation(object):
         if self.t + self.dt > t_end:
             self.dt = t_end - self.t
         self.cons = self.timestepper(self, self.cons, self.prim, self.aux)
-        if self.model.fix_cons:
-            self.cons = self.model.fix_cons(self.cons)
+        if self.fix_cons:
+            self.cons = self.fix_cons(self.cons)
         self.cons = self.bcs(self.cons, self.grid.Npoints, self.grid.Ngz)
         self.prim, self.aux = self.model.cons2all(self.cons, self.prim)
         self.t += self.dt

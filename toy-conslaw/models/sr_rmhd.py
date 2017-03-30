@@ -253,10 +253,103 @@ class sr_rmhd_gamma_law(object):
             return s
         return fast_source
     
+    """ Completely untested
     def source_fprime(self, cons, prim, aux):
         jac = numpy.zeros((cons.shape[0], cons.shape[0]))
-        raise(NotImplementedError)
+        dsdw = numpy.zeros_like(jac)
+        dqdw = numpy.zeros_like(jac)
+        rho = prim[0]
+        vx  = prim[1]
+        vy  = prim[2]
+        vz  = prim[3]
+        eps = prim[4]
+        Bx = prim[5]
+        By = prim[6]
+        Bz = prim[7]
+        Ex = prim[8]
+        Ey = prim[9]
+        Ez = prim[10]
+        q = prim[11]
+        W = aux[1]
+        vcrossB_x = vy * Bz - vz * By
+        vcrossB_y = vz * Bx - vx * Bz
+        vcrossB_z = vx * By - vy * Bx
+        vdotE = vx * Ex + vy * Ey + vz * Ez
+        dqdw[0, 0] = 1 / W
+        dqdw[0, 1] = rho * vx / W**3
+        dqdw[0, 2] = rho * vy / W**3
+        dqdw[0, 3] = rho * vz / W**3
+        dqdw[1, 0] = vx * (self.gamma * eps + 1) / W**2
+        dqdw[1, 1] = rho * (self.gamma * eps + 1) / W**4 * (W**2 + 2*vx**2)
+        dqdw[1, 2] = rho * (self.gamma * eps + 1) / W**4 * (2 * vx * vy)
+        dqdw[1, 3] = rho * (self.gamma * eps + 1) / W**4 * (2 * vx * vz)
+        dqdw[1, 4] = self.gamma * rho * vx / W**2
+        dqdw[1, 6] = -Ez
+        dqdw[1, 7] = Ey
+        dqdw[1, 9] = Bz
+        dqdw[1, 10] = -By
+        dqdw[2, 0] = vy * (self.gamma * eps + 1) / W**2
+        dqdw[2, 1] = rho * (self.gamma * eps + 1) / W**4 * (2 * vx * vy)
+        dqdw[2, 2] = rho * (self.gamma * eps + 1) / W**4 * (W**2 + 2*vy**2)
+        dqdw[2, 3] = rho * (self.gamma * eps + 1) / W**4 * (2 * vy * vz)
+        dqdw[2, 4] = self.gamma * rho * vy / W**2
+        dqdw[2, 5] = Ez
+        dqdw[2, 7] = -Ex
+        dqdw[2, 8] = -Bz
+        dqdw[2, 10] = Bx
+        dqdw[3, 0] = vz * (self.gamma * eps + 1) / W**2
+        dqdw[3, 1] = rho * (self.gamma * eps + 1) / W**4 * (2 * vx * vz)
+        dqdw[3, 2] = rho * (self.gamma * eps + 1) / W**4 * (2 * vy * vz)
+        dqdw[3, 3] = rho * (self.gamma * eps + 1) / W**4 * (W**2 + 2*vz**2)
+        dqdw[3, 4] = self.gamma * rho * vz / W**2
+        dqdw[3, 5] = -Ey
+        dqdw[3, 6] = Ex
+        dqdw[3, 8] = By
+        dqdw[3, 9] = -Bx
+        dqdw[4, 0] = (W**2 * eps * (1 - self.gamma) - W + eps * self.gamma + 1) / W**2
+        dqdw[4, 1] = rho * vx * (2 * (1 + self.gamma * eps) - W) / W**2
+        dqdw[4, 2] = rho * vy * (2 * (1 + self.gamma * eps) - W) / W**2
+        dqdw[4, 3] = rho * vz * (2 * (1 + self.gamma * eps) - W) / W**2
+        dqdw[4, 4] = rho * (1 - self.gamma + self.gamma / W**2)
+        dqdw[4, 5] = Bx
+        dqdw[4, 6] = By
+        dqdw[4, 7] = Bz
+        dqdw[4, 8] = Ex
+        dqdw[4, 9] = Ey
+        dqdw[4, 10] = Ez
+        for i in range(5, 12):
+            dqdw[i, i] = 1
+        dsdw[8, 1] = (-q*W**3 + self.sigma*W**2*(vdotE + Ex*vx) + self.sigma*vx*(vdotE*vx - Ex - vcrossB_x)) / W**3
+        dsdw[8, 2] = self.sigma * (W**2*(Ey*vx - Bz) + vy*(vdotE*vx - Ex - vcrossB_x)) / W**3
+        dsdw[8, 3] = self.sigma * (W**2*(Ez*vx + By) + vz*(vdotE*vx - Ex - vcrossB_x)) / W**3
+        dsdw[8, 6] = self.sigma * vz / W
+        dsdw[8, 7] = -self.sigma * vy / W
+        dsdw[8, 8] = self.sigma * (vx**2 - 1) / W
+        dsdw[8, 9] = self.sigma * vx * vy / W
+        dsdw[8, 10] = self.sigma * vx * vz / W
+        dsdw[8, 11] = -vx
+        dsdw[9, 1] = self.sigma * (W**2*(Ex*vy + Bz) + vx*(vdotE*vy - Ey - vcrossB_y)) / W**3
+        dsdw[9, 2] = (-q*W**3 + self.sigma*W**2*(vdotE + Ey*vy) + self.sigma*vy*(vdotE*vy - Ey - vcrossB_y)) / W**3
+        dsdw[9, 3] = self.sigma * (W**2*(Ez*vy - Bx) + vz*(vdotE*vy - Ey - vcrossB_y)) / W**3
+        dsdw[9, 5] = -self.sigma * vz / W
+        dsdw[9, 7] = self.sigma * vx / W
+        dsdw[9, 8] = self.sigma * vx * vy / W
+        dsdw[9, 9] = self.sigma * (vy**2 - 1) / W
+        dsdw[9, 10] = self.sigma * vy * vz / W
+        dsdw[9, 11] = -vy
+        dsdw[10, 1] = self.sigma * (W**2*(Ex*vz - By) + vx*(vdotE*vz - Ez - vcrossB_z)) / W**3
+        dsdw[10, 2] = self.sigma * (W**2*(Ey*vz + Bx) + vy*(vdotE*vz - Ez - vcrossB_z)) / W**3
+        dsdw[10, 3] = (-q*W**3 + self.sigma*W**2*(vdotE + Ez*vz) + self.sigma*vz*(vdotE*vz - Ez - vcrossB_z)) / W**3
+        dsdw[10, 5] = self.sigma * vy / W
+        dsdw[10, 6] = -self.sigma * vx / W
+        dsdw[10, 8] = self.sigma * vx * vz / W
+        dsdw[10, 9] = self.sigma * vy * vz / W
+        dsdw[10, 10] = self.sigma * (vz**2 - 1) / W
+        dsdw[10, 11] = -vz
         
+        jac = numpy.dot(dsdw, dqdw.inv())
+        return jac
+        """
 
 def initial_riemann(ql, qr):
     return lambda x : numpy.where(x < 0.0,

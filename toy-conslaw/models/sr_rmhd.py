@@ -252,6 +252,20 @@ class sr_rmhd_gamma_law(object):
 #            s[12, :] = cons[11, :] - self.kappa * cons[12, :]
             return s
         return fast_source
+        
+    def relaxation_guess(self):
+        def guess_function(cons, prim, aux):
+            guess = cons.copy()
+            print('guess', guess.shape)
+            if self.sigma > 1:
+                mhd_result = guess.copy()
+                v = prim[1:4,:]
+                B = prim[5:8,:]
+                E = - numpy.cross(v, B)
+                mhd_result[8:11,:] = E
+                guess = guess / self.sigma + mhd_result * (1 - 1 / self.sigma)
+            return guess
+        return guess_function
     
     """ Completely untested
     def source_fprime(self, cons, prim, aux):

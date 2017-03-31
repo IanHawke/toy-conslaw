@@ -48,24 +48,21 @@ def rk_backward_euler_split(rk_method, source):
         return numpy.reshape(consnext, cons.shape)
     return timestepper
 
-def imex222(source, source_fprime=None):
+def imex222(source, source_fprime=None, source_guess=None):
     gamma = 1 - 1/numpy.sqrt(2)
     def residual1(consguess, dt, cons, prim, simulation):
         consguess = consguess.reshape((cons.shape[0], 1))
         cons = cons.reshape((cons.shape[0], 1))
         prim = prim.reshape((prim.shape[0], 1))
         primguess, auxguess = simulation.model.cons2all(consguess, prim)
+        if source_guess:
+            consguess = source_guess(consguess, primguess, auxguess)
+            primguess, auxguess = simulation.model.cons2all(consguess, prim)
         res = consguess - cons - dt * gamma * source(consguess, 
                                                      primguess, auxguess)
         if numpy.any(numpy.isnan(res)):
             res = 1e6 * numpy.ones_like(consguess)
         return res.ravel()
-    def residual1_prime(consguess, dt, cons, prim, simulation):
-        consguess = consguess.reshape((cons.shape[0], 1))
-        jac = numpy.eye(cons.shape[0])
-        primguess, auxguess = simulation.model.cons2all(consguess, prim)
-        jac -= dt * gamma * source_fprime(consguess, primguess, auxguess)
-        return jac
     def residual2(consguess, dt, cons, prim, k1, source1, simulation):
         consguess = consguess.reshape((cons.shape[0], 1))
         cons = cons.reshape((cons.shape[0], 1))
@@ -73,21 +70,32 @@ def imex222(source, source_fprime=None):
         k1 = cons.reshape((k1.shape[0], 1))
         source1 = cons.reshape((source1.shape[0], 1))
         primguess, auxguess = simulation.model.cons2all(consguess, prim)
+        if source_guess:
+            consguess = source_guess(consguess, primguess, auxguess)
+            primguess, auxguess = simulation.model.cons2all(consguess, prim)
         res = (consguess - cons - dt * (k1 + (1 - 2*gamma)*source1 + \
             gamma*source(consguess, primguess, auxguess))).ravel()
         if numpy.any(numpy.isnan(res)):
             res = 1e6 * numpy.ones_like(consguess)
         return res
-    def residual2_prime(consguess, dt, cons, prim, k1, source1, simulation):
-        """
-        Whilst the result is idential to residual1_prime, the argument list
-        is of course different
-        """
-        consguess = consguess.reshape((cons.shape[0], 1))
-        jac = numpy.eye(cons.shape[0])
-        primguess, auxguess = simulation.model.cons2all(consguess, prim)
-        jac -= dt * gamma * source_fprime(consguess, primguess, auxguess)
-        return jac
+#    def residual1_prime(consguess, dt, cons, prim, simulation):
+#        consguess = consguess.reshape((cons.shape[0], 1))
+#        jac = numpy.eye(cons.shape[0])
+#        primguess, auxguess = simulation.model.cons2all(consguess, prim)
+#        jac -= dt * gamma * source_fprime(consguess, primguess, auxguess)
+#        return jac
+#    def residual2_prime(consguess, dt, cons, prim, k1, source1, simulation):
+#        """
+#        Whilst the result is idential to residual1_prime, the argument list
+#        is of course different
+#        """
+#        consguess = consguess.reshape((cons.shape[0], 1))
+#        jac = numpy.eye(cons.shape[0])
+#        primguess, auxguess = simulation.model.cons2all(consguess, prim)
+#        jac -= dt * gamma * source_fprime(consguess, primguess, auxguess)
+#        return jac
+    residual1_prime = None
+    residual2_prime = None
     def timestepper(simulation, cons, prim, aux):
         Np = cons.shape[1]
         dt = simulation.dt

@@ -88,7 +88,7 @@ class sr_mf_gamma_law(object):
                      Hbar_p * W_p**2 * v_p[1, :]
         cons[8, :] = Hbar_e * W_e**2 * v_e[2, :] + \
                      Hbar_p * W_p**2 * v_p[2, :]
-        cons[9, :] = Hbar_e * W_e**2 + Hbar_p * W_p**2 - p_e - p_p
+        cons[9, :] = Hbar_e * W_e**2 + Hbar_p * W_p**2 - pbar_e - pbar_p
         cons[10, :] = B[0, :]
         cons[11, :] = B[1, :]
         cons[12, :] = B[2, :]
@@ -131,15 +131,15 @@ class sr_mf_gamma_law(object):
         aux[29, :] = W
         return cons, aux
         
-    def cons_fn(self, guess, D, tautilde, S2tilde):
-        v2 = S2tilde / guess**2
+    def cons_fn(self, guess, D, tau, S2):
+        v2 = S2 / guess**2
         W = 1 / numpy.sqrt(1 - v2)
         rho = D / W
         if rho < 0 or guess < 0 or v2 >= 1:
             residual = 1e6
         else:
             residual = (1 - (self.gamma - 1) / (self.gamma * W**2)) * guess + \
-                ((self.gamma - 1) / (self.gamma * W) - 1) * D - tautilde
+                ((self.gamma - 1) / (self.gamma * W) - 1) * D - tau
         return residual
     
     def cons2all(self, cons, prim_old):
@@ -267,8 +267,8 @@ class sr_mf_gamma_law(object):
         Hbar_p = aux[9, :]
         rhobar_e = aux[10, :]
         rhobar_p = aux[11, :]
-        B2  = aux[3, :]
-        E2  = aux[4, :]
+        B2  = aux[12, :]
+        E2  = aux[13, :]
         EcrossB_x = aux[14, :]
         
         f = numpy.zeros_like(cons)
@@ -341,9 +341,9 @@ class sr_mf_gamma_law(object):
             rho = aux[27, :]
             W = aux[28, :]
             w2p = aux[21, :]
-            s[9:12, :] = W * E + ucrossB - self.eta * (J - rho_0 * u)
-            s[12, :] = numpy.sum(u*E, axis=0) - self.eta * (rho - rho_0 * W)
-            s[9:13, :] *= w2p
+            s[7:10, :] = W * E + ucrossB - self.eta * (J - rho_0 * u)
+            s[10, :] = numpy.sum(u*E, axis=0) - self.eta * (rho - rho_0 * W)
+            s[7:10, :] *= w2p
             s[13:16, :] = -J
             return s
         return fast_source

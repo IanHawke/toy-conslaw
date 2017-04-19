@@ -12,7 +12,7 @@ from matplotlib import pyplot
 from cycler import cycler
 
 Ngz = 3
-Npoints = 200
+Npoints = 100
 L = 0.5
 interval = grid([-L, L], Npoints, Ngz)
 
@@ -24,9 +24,9 @@ vyL = 0
 vyR = 0
 vzL = 0
 vzR = 0
-Bx = 0
-ByL = 0.5
-ByR =-0.5
+Bx = 0.5
+ByL = 1.0
+ByR =-1.0
 BzL = 0
 BzR = 0
 gamma = 2.0
@@ -55,11 +55,15 @@ sim = simulation(model, interval, fvs_method(2), imex222(fast_source),
 sim.evolve(0.4)
 
 fig = pyplot.figure()
-ax = fig.add_subplot(111)
+ax = fig.add_subplot(121)
+ax.plot(sim.coordinates, sim.cons[0, :] + sim.cons[5, :])
+ax.set_xlabel(r"$x$")
+ax.set_ylabel(r"$\rho$")
+ax.set_xlim(sim.grid.interval[0],sim.grid.interval[1])
+ax = fig.add_subplot(122)
 ax.plot(sim.coordinates, sim.cons[11, :])
 ax.set_xlabel(r"$x$")
 ax.set_ylabel(r"$B_y$")
 ax.set_xlim(sim.grid.interval[0],sim.grid.interval[1])
-ax.legend(loc="lower left")
 pyplot.show()
     

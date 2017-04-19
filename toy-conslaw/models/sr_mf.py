@@ -15,7 +15,7 @@ class sr_mf_gamma_law(object):
         self.mu_p = mu_p
         self.Nvars = 16
         self.Nprim = 16
-        self.Naux = 29
+        self.Naux = 30
         self.initial_data = initial_data
         self.prim_names = (r"$\rho_{e}$", r"$(v_x)_{e}$", r"$(v_y)_{e}$", r"$(v_z)_{e}$",
                            r"$\epsilon_{e}$",
@@ -51,8 +51,8 @@ class sr_mf_gamma_law(object):
         eps_p = prim[9, :]
         B  = prim[10:13, :]
         E  = prim[13:16, :]
-        v2_e = numpy.sum(v_e**2, axis=1)
-        v2_p = numpy.sum(v_p**2, axis=1)
+        v2_e = numpy.sum(v_e**2, axis=0)
+        v2_p = numpy.sum(v_p**2, axis=0)
         W_e = 1 / numpy.sqrt(1 - v2_e)
         W_p = 1 / numpy.sqrt(1 - v2_p)
         p_e = (self.gamma - 1) * rho_e * eps_e
@@ -65,20 +65,20 @@ class sr_mf_gamma_law(object):
         pbar_p = (self.gamma - 1) * rhobar_p * eps_p
         Hbar_e = rhobar_e * (1.0 + self.gamma * eps_e)
         Hbar_p = rhobar_p * (1.0 + self.gamma * eps_p)
-        B2 = numpy.sum(B**2, axis=1)
-        E2 = numpy.sum(E**2, axis=1)
-        EcrossB = numpy.cross(E, B, axisa=0, axisb=0)
+        B2 = numpy.sum(B**2, axis=0)
+        E2 = numpy.sum(E**2, axis=0)
+        EcrossB = numpy.cross(E, B, axis=0)
         cons = numpy.zeros_like(prim)
         cons[0, :] = rho_e * W_e + rho_p * W_p
         cons[1, :] = rho_e * h_e * W_e**2 * v_e[0, :] + \
                      rho_p * h_p * W_p**2 * v_p[0, :] + \
-                     EcrossB[0]
+                     EcrossB[0, :]
         cons[2, :] = rho_e * h_e * W_e**2 * v_e[1, :] + \
                      rho_p * h_p * W_p**2 * v_p[1, :] + \
-                     EcrossB[1]
+                     EcrossB[1, :]
         cons[3, :] = rho_e * h_e * W_e**2 * v_e[2, :] + \
                      rho_p * h_p * W_p**2 * v_p[2, :] + \
-                     EcrossB[2]
+                     EcrossB[2, :]
         cons[4, :] = rho_e * h_e * W_e**2 + \
                      rho_p * h_p * W_p**2 - p_e - p_p + (E2 + B2) / 2
         cons[5, :] = rhobar_e * W_e + rhobar_p * W_p
@@ -118,17 +118,17 @@ class sr_mf_gamma_law(object):
         w2p = self.mu_e**2 * rho_e + self.mu_p**2 * rho_p
         W = (self.mu_e**2 * rho_e * W_e + self.mu_p**2 * rho_p * W_p) / w2p
         u = (self.mu_e**2 * rho_e * W_e * v_e + self.mu_p**2 * rho_p * W_p * v_p) / w2p
-        rho_0 = W * rho - numpy.sum(J*u, axis=1)
-        ucrossB = numpy.cross(u, B, axisa=0, axisB=0)
+        rho_0 = W * rho - numpy.sum(J*u, axis=0)
+        ucrossB = numpy.cross(u, B, axis=0)
         aux[17, :] = J[0, :]
         aux[18, :] = J[1, :]
         aux[19, :] = J[2, :]
         aux[20, :] = rho_0
         aux[21, :] = w2p
         aux[22:25, :] = ucrossB
-        aux[26, :] = u
-        aux[27, :] = rho
-        aux[28, :] = W
+        aux[25:28, :] = u
+        aux[28, :] = rho
+        aux[29, :] = W
         return cons, aux
         
     def cons_fn(self, guess, D, tautilde, S2tilde):
@@ -227,25 +227,25 @@ class sr_mf_gamma_law(object):
             aux[11, i] = rhobar_p
             aux[12, i] = B2
             aux[13, i] = E2
-            aux[14, i] = EcrossB[0, :]
-            aux[15, i] = EcrossB[1, :]
-            aux[16, i] = EcrossB[2, :]
+            aux[14, i] = EcrossB[0]
+            aux[15, i] = EcrossB[1]
+            aux[16, i] = EcrossB[2]
             rho = self.mu_e * W_e * rho_e + self.mu_p * W_p * rho_p
             J = self.mu_e * rho_e * W_e * v_e + self.mu_p * rho_p * W_p * v_p
             w2p = self.mu_e**2 * rho_e + self.mu_p**2 * rho_p
             W = (self.mu_e**2 * rho_e * W_e + self.mu_p**2 * rho_p * W_p) / w2p
             u = (self.mu_e**2 * rho_e * W_e * v_e + self.mu_p**2 * rho_p * W_p * v_p) / w2p
-            rho_0 = W * rho - numpy.sum(J*u, axis=1)
-            ucrossB = numpy.cross(u, B, axisa=0, axisB=0)
-            aux[17, i] = J[0, :]
-            aux[18, i] = J[1, :]
-            aux[19, i] = J[2, :]
+            rho_0 = W * rho - numpy.sum(J*u, axis=0)
+            ucrossB = numpy.cross(u, B, axis=0)
+            aux[17, i] = J[0]
+            aux[18, i] = J[1]
+            aux[19, i] = J[2]
             aux[20, i] = rho_0
             aux[21, i] = w2p
             aux[22:25, i] = ucrossB
-            aux[26, i] = u
-            aux[27, i] = rho
-            aux[28, i] = W
+            aux[25:28, i] = u
+            aux[28, i] = rho
+            aux[29, i] = W
         return prim, aux
         
     def flux(self, cons, prim, aux):

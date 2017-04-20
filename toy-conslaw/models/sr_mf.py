@@ -13,8 +13,8 @@ class sr_mf_gamma_law(object):
         self.kappa = kappa
         self.mu_e = mu_e
         self.mu_p = mu_p
-        self.Nvars = 16
-        self.Nprim = 16
+        self.Nvars = 18
+        self.Nprim = 18
         self.Naux = 30
         self.initial_data = initial_data
         self.prim_names = (r"$\rho_{e}$", r"$(v_x)_{e}$", r"$(v_y)_{e}$", r"$(v_z)_{e}$",
@@ -22,11 +22,13 @@ class sr_mf_gamma_law(object):
                            r"$\rho_{p}$", r"$(v_x)_{p}$", r"$(v_y)_{p}$", r"$(v_z)_{p}$",
                            r"$\epsilon_{p}$",
                            r"$B_x$", r"$B_y$", r"$B_z$",
-                           r"$E_x$", r"$E_y$", r"$E_z$")
+                           r"$E_x$", r"$E_y$", r"$E_z$",
+                           r"$\Phi$", r"$\Psi$")
         self.cons_names = (r"$D_{sum}$", r"$(S_x)_{sum}$", r"$(S_y)_{sum}$", r"$(S_z)_{sum}$", r"$\tau_{sum}$",
                            r"$D_{diff}$", r"$(S_x)_{diff}$", r"$(S_y)_{diff}$", r"$(S_z)_{diff}$", r"$\tau_{diff}$",
                            r"$B_x$", r"$B_y$", r"$B_z$",
-                           r"$E_x$", r"$E_y$", r"$E_z$")
+                           r"$E_x$", r"$E_y$", r"$E_z$",
+                           r"$\Phi$", r"$\Psi$")
         self.aux_names = (r"$p_e$", r"$p_p$", r"$\bar{p}_e$", r"$\bar{p}_p$",
                           r"$W_{e}$", r"$W_{p}$", r"$h_e$", r"$h_p$", 
                           r"$\bar{H}_e$", r"$\bar{H}_p$", 
@@ -95,6 +97,7 @@ class sr_mf_gamma_law(object):
         cons[13, :] = E[0, :]
         cons[14, :] = E[1, :]
         cons[15, :] = E[2, :]
+        cons[16:18, :] = prim[16:18, :]
         aux = numpy.zeros((self.Naux, prim.shape[1]))
         aux[0, :] = p_e
         aux[1, :] = p_p
@@ -135,11 +138,13 @@ class sr_mf_gamma_law(object):
         v2 = S2 / guess**2
         W = 1 / numpy.sqrt(1 - v2)
         rho = D / W
-        if rho < 0 or guess < 0 or v2 >= 1:
+        p = guess - tau
+        if p < 0 or rho < 0 or guess < 0 or v2 >= 1:
             residual = 1e6
         else:
-            residual = (1 - (self.gamma - 1) / (self.gamma * W**2)) * guess + \
-                ((self.gamma - 1) / (self.gamma * W) - 1) * D - tau
+#            residual = (1 - (self.gamma - 1) / (self.gamma * W**2)) * guess + \
+#                ((self.gamma - 1) / (self.gamma * W) - 1) * D - tau
+            residual = guess - (rho + self.gamma / (self.gamma - 1) * p) * W**2
         return residual
     
     def cons2all(self, cons, prim_old):
@@ -206,6 +211,7 @@ class sr_mf_gamma_law(object):
             prim[9, i] = eps_p
             prim[10:13, i] = B
             prim[13:16, i] = E
+            prim[16:18, i] = cons[16:18, i]
             
             rhobar_e = rho_e * self.mu_e
             rhobar_p = rho_p * self.mu_p
@@ -297,9 +303,12 @@ class sr_mf_gamma_law(object):
         f[10, :] = 0 # Bx
         f[11, :] = -E[2, :]
         f[12, :] =  E[1, :]
-        f[13, :] = 0 + cons[12, :] #Ex
+        f[13, :] = cons[17, :] #Ex
         f[14, :] =  B[2, :]
         f[15, :] = -B[1, :]
+        # Lagrange multipliers
+        f[16, :] = B[0, :]
+        f[17, :] = E[0, :]
         return f
         
 #    def fix_cons(self, cons):
@@ -345,6 +354,9 @@ class sr_mf_gamma_law(object):
             s[10, :] = numpy.sum(u*E, axis=0) - self.eta * (rho - rho_0 * W)
             s[7:10, :] *= w2p
             s[13:16, :] = -J
+            # Extended Lagrange multipliers
+            s[16, :] = - self.kappa * cons[16, :]
+            s[17, :] = rho - self.kappa * cons[17, :]
             return s
         return fast_source
 #        
@@ -364,5 +376,5 @@ class sr_mf_gamma_law(object):
     
 def initial_riemann(ql, qr):
     return lambda x : numpy.where(x < 0.0,
-                                  ql[:,numpy.newaxis]*numpy.ones((16,len(x))),
-                                  qr[:,numpy.newaxis]*numpy.ones((16,len(x))))
+                                  ql[:,numpy.newaxis]*numpy.ones((18,len(x))),
+                                  qr[:,numpy.newaxis]*numpy.ones((18,len(x))))

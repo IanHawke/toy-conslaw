@@ -43,8 +43,8 @@ rhoR_p = m_p / (m_p + m_e) * rhoR
 rhoR_e = m_e / (m_p + m_e) * rhoR
 
 
-qL = numpy.array([rhoL_e, 0, 0, 0, epsL, rhoL_p, 0, 0, 0, epsL, Bx , ByL , BzL, 0, 0, 0 ])
-qR = numpy.array([rhoR_e, 0, 0, 0, epsR, rhoR_p, 0, 0, 0, epsR, Bx , ByR , BzR, 0, 0, 0 ])
+qL = numpy.array([rhoL_e, 0, 0, 0, epsL, rhoL_p, 0, 0, 0, epsL, Bx , ByL , BzL, 0, 0, 0, 0, 0 ])
+qR = numpy.array([rhoR_e, 0, 0, 0, epsR, rhoR_p, 0, 0, 0, epsR, Bx , ByR , BzR, 0, 0, 0, 0, 0 ])
 
 model = sr_mf.sr_mf_gamma_law(initial_data = sr_mf.initial_riemann(qL, qR),
                               gamma=gamma)

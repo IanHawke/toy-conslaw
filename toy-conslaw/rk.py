@@ -54,10 +54,11 @@ def imex222(source, source_fprime=None, source_guess=None):
         consguess = consguess.reshape((cons.shape[0], 1))
         cons = cons.reshape((cons.shape[0], 1))
         prim = prim.reshape((prim.shape[0], 1))
-        primguess, auxguess = simulation.model.cons2all(consguess, prim)
-        if source_guess:
-            consguess = source_guess(consguess, primguess, auxguess)
+        try:
             primguess, auxguess = simulation.model.cons2all(consguess, prim)
+        except ValueError:
+            res = 1e6 * numpy.ones_like(consguess)
+            return res.ravel()
         res = consguess - cons - dt * gamma * source(consguess, 
                                                      primguess, auxguess)
         if numpy.any(numpy.isnan(res)):
@@ -69,10 +70,11 @@ def imex222(source, source_fprime=None, source_guess=None):
         prim = prim.reshape((prim.shape[0], 1))
         k1 = cons.reshape((k1.shape[0], 1))
         source1 = cons.reshape((source1.shape[0], 1))
-        primguess, auxguess = simulation.model.cons2all(consguess, prim)
-        if source_guess:
-            consguess = source_guess(consguess, primguess, auxguess)
+        try:
             primguess, auxguess = simulation.model.cons2all(consguess, prim)
+        except ValueError:
+            res = 1e6 * numpy.ones_like(consguess)
+            return res.ravel()
         res = (consguess - cons - dt * (k1 + (1 - 2*gamma)*source1 + \
             gamma*source(consguess, primguess, auxguess))).ravel()
         if numpy.any(numpy.isnan(res)):
@@ -101,6 +103,9 @@ def imex222(source, source_fprime=None, source_guess=None):
         dt = simulation.dt
         rhs = simulation.rhs
         consguess = cons.copy()
+        if source_guess:
+            primguess, auxguess = simulation.model.cons2all(consguess, prim)
+            consguess = source_guess(consguess, primguess, auxguess)
         cons1 = numpy.zeros_like(cons)
         for i in range(Np):
             cons1[:,i] = fsolve(residual1, consguess[:,i],

@@ -19,12 +19,12 @@ def rk3(simulation, cons, prim, aux):
     rhs = simulation.rhs
     cons1 = cons + dt * rhs(cons, prim, aux, simulation)
     cons1 = simulation.bcs(cons1, simulation.grid.Npoints, simulation.grid.Ngz)
-    if simulation.model.fix_cons:
+    if simulation.fix_cons:
         cons1 = simulation.model.fix_cons(cons1)
     prim1, aux1 = simulation.model.cons2all(cons1, prim)
     cons2 = (3 * cons + cons1 + dt * rhs(cons1, prim1, aux1, simulation)) / 4
     cons2 = simulation.bcs(cons2, simulation.grid.Npoints, simulation.grid.Ngz)
-    if simulation.model.fix_cons:
+    if simulation.fix_cons:
         cons2 = simulation.model.fix_cons(cons2)
     prim2, aux2 = simulation.model.cons2all(cons2, prim1)
     return (cons + 2 * cons2 + 2 * dt * rhs(cons2, prim2, aux2, simulation)) / 3

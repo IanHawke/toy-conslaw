@@ -75,7 +75,7 @@ class sr_euler_gamma_law(object):
             residual = 1e6
         return residual
     
-    def cons2all(self, cons):
+    def cons2all(self, cons, prim_old):
         Np = cons.shape[1]
         prim = numpy.zeros_like(cons)
         aux = numpy.zeros((self.Naux, Np))

@@ -40,11 +40,20 @@ def rk_backward_euler_split(rk_method, source):
     def timestepper(simulation, cons, prim, aux):
         consstar = rk_method(simulation, cons, prim, aux)
         primstar, auxstar = simulation.model.cons2all(consstar, prim)
-        def residual(consguess):
-            primguess, auxguess = simulation.model.cons2all(consguess.reshape(cons.shape), prim)
-            return consguess - consstar.ravel() - simulation.dt*source(consguess, primguess, auxguess).ravel()
-        cons_initial_guess = consstar + 0.5*simulation.dt*source(consstar, primstar, auxstar)
-        consnext = fsolve(residual, cons_initial_guess.ravel())
+        def residual(consguess, cons_star, prim_old):
+            consguess = consguess.reshape(consguess.shape[0], 1)
+            prim_old = prim_old.reshape(prim_old.shape[0], 1)
+            cons_star = cons_star.reshape(cons_star.shape[0], 1)
+            primguess, auxguess = simulation.model.cons2all(consguess, prim_old)
+            return (consguess - cons_star - simulation.dt*source(consguess, primguess, auxguess)).ravel()
+        consnext = numpy.zeros_like(cons)
+        cons_initial_guess = consstar + \
+                          0.5*simulation.dt*source(consstar, 
+                                                   primstar, 
+                                                   auxstar)
+        for i in range(cons.shape[1]):
+            consnext[:, i] = fsolve(residual, cons_initial_guess[:,i].ravel(),
+                                    args=(consstar[:, i].ravel(), prim[:, i].ravel()))
         return numpy.reshape(consnext, cons.shape)
     return timestepper
 

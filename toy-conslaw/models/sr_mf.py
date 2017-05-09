@@ -292,11 +292,20 @@ class sr_mf_gamma_law(object):
             W_p = aux[3, :]
             J = aux[11:14, :]
             vcrossB = aux[14:17, :]
+            v = aux[17:20, :]
             rho = aux[20, :]
-            s[6:9, :] = (rho * E + vcrossB) / self.kappa_m + \
+#            s[6:9, :] = (rho * E + vcrossB) / self.kappa_m + \
+#                        rho_p * rho_e / self.kappa_f * \
+#                        (1 / self.mass_frac_e + 1 / self.mass_frac_p) * \
+#                        (W_e * v_e - W_p * v_p)
+            s[1:4, :] = (rho * E + vcrossB) / self.kappa_m + \
                         rho_p * rho_e / self.kappa_f * \
                         (1 / self.mass_frac_e + 1 / self.mass_frac_p) * \
                         (W_e * v_e - W_p * v_p)
+            s[4, :] = 1.0 / self.kappa_m * numpy.sum(v*E) + \
+                        rho_p * rho_e / self.kappa_f * \
+                        (1. / self.mass_frac_e + 1. / self.mass_frac_p) * \
+                        (W_e  - W_p)
             s[13:16, :] = -J
             # Extended Lagrange multipliers
             s[16, :] = - self.kappa * cons[16, :]
@@ -337,3 +346,67 @@ def initial_random(amplitude):
         init_data[16:, :] = 0.0
         return init_data
     return initial_data
+
+def initial_alfven(gamma = 4.0 / 3.0, 
+                   Kappa_q = 1.0, Kappa_m = 0.05066059182116889, Kappa_f = 0.0,
+                   kwave = 2.0 * numpy.pi, rhobval = 1.0, pressbval = 1.0/4.0):
+    def initial_data(x):
+        epsbval = pressbval / (gamma-1.0) / rhobval
+        hbval   = 1.0 + epsbval + pressbval / rhobval
+    
+        Omega2p = 1.0 / Kappa_q / Kappa_m * 4.0 * rhobval / hbval
+        kbwave = numpy.sqrt(Omega2p)
+        Omega = numpy.sqrt(Omega2p * (1.0 + (kwave/kbwave)**2))
+
+        Bperp = 1.0
+        Bparallel = 0.0
+    
+        A_vel = 2.0 / Kappa_m  / hbval / kwave
+        
+        new_time = 0.0
+    
+        rho_p = rhobval
+        press_p = pressbval
+        eps_p = press_p/(gamma-1.0)/rho_p
+        
+        rho_e = rhobval 
+        press_e = press_p 
+        eps_e = press_e/(gamma-1.0)/rho_e 
+        
+        Bvecx = Bparallel * x
+        Bvecy = +Bperp*numpy.cos(-Omega*new_time + kwave * x)
+        Bvecz = -Bperp*numpy.sin(-Omega*new_time + kwave * x)
+        
+        Evecx = 0.0
+        Evecy = (Omega/kwave)*Bvecz
+        Evecz = -(Omega/kwave)*(Bvecy)
+        
+        velxp = 0.0
+        velyp = -A_vel * Bvecy/numpy.sqrt(A_vel**2 * Bperp**2 + 1.0)
+    
+        velzp = -A_vel * Bvecz/numpy.sqrt(A_vel**2 * Bperp**2 + 1.0)
+    
+        velxe = 0.0
+        velye = - velyp
+        velze = - velzp
+    
+        init_data = numpy.zeros(shape=(18,len(x)))
+        init_data[0, :] += rho_p
+        init_data[1, :] += velxp
+        init_data[2, :] += velyp
+        init_data[3, :] += velzp
+        init_data[4, :] += eps_p    
+        init_data[5, :] += rho_e
+        init_data[6, :] += velxe
+        init_data[7, :] += velye
+        init_data[8, :] += velze
+        init_data[9, :] += eps_e
+        init_data[10,:] += Bvecx
+        init_data[11,:] += Bvecy
+        init_data[12,:] += Bvecz
+        init_data[13,:] += Evecx
+        init_data[14,:] += Evecy
+        init_data[15,:] += Evecz
+        return init_data
+    return initial_data
+

@@ -391,16 +391,16 @@ def initial_alfven(gamma = 4.0 / 3.0,
         velze = - velzp
     
         init_data = numpy.zeros(shape=(18,len(x)))
-        init_data[0, :] += rho_p
-        init_data[1, :] += velxp
-        init_data[2, :] += velyp
-        init_data[3, :] += velzp
-        init_data[4, :] += eps_p    
-        init_data[5, :] += rho_e
-        init_data[6, :] += velxe
-        init_data[7, :] += velye
-        init_data[8, :] += velze
-        init_data[9, :] += eps_e
+        init_data[0, :] += rho_e
+        init_data[1, :] += velxe
+        init_data[2, :] += velye
+        init_data[3, :] += velze
+        init_data[4, :] += eps_e    
+        init_data[5, :] += rho_p
+        init_data[6, :] += velxp
+        init_data[7, :] += velyp
+        init_data[8, :] += velzp
+        init_data[9, :] += eps_p
         init_data[10,:] += Bvecx
         init_data[11,:] += Bvecy
         init_data[12,:] += Bvecz

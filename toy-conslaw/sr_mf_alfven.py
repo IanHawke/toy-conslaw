@@ -25,8 +25,9 @@ model_mf = sr_mf.sr_mf_gamma_law(initial_data = sr_mf.initial_alfven(gamma=gamma
 fast_source_mf  = model_mf.relaxation_source()
 #timestepper = rk_backward_euler_split(rk3, fast_source_mf)
 #timestepper = rk_euler_split(rk3, fast_source_mf)
-timestepper = rk3
+#timestepper = rk3
+timestepper = imex222(fast_source_mf)
 sim_mf = simulation(model_mf, interval, fvs_method(2), timestepper, 
                     periodic, cfl=0.25)
 
-sim_mf.evolve(0.5)
+sim_mf.evolve(0.00025)

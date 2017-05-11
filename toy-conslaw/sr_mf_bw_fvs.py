@@ -5,14 +5,14 @@ import numpy
 from models import sr_mf, sr_rmhd
 from bcs import outflow
 from simulation import simulation
-from methods import fvs_method
+from methods import fvs_method, vanleer_lf
 from rk import imex222, rk3
 from grid import grid
 from matplotlib import pyplot
 from cycler import cycler
 
 Ngz = 3
-Npoints = 100
+Npoints = 50
 L = 0.5
 interval = grid([-L, L], Npoints, Ngz)
 
@@ -29,26 +29,32 @@ ByL = 1.0
 ByR =-1.0
 BzL = 0
 BzR = 0
-gamma = 4.0 / 3.0
+gamma = 2.0
 epsL = pL / rhoL / (gamma - 1)
 epsR = pR / rhoR / (gamma - 1)
 
-m_p = 1
-m_e = 1
-rhoL_p = m_p / (m_p + m_e) * rhoL
-rhoL_e = m_e / (m_p + m_e) * rhoL
-rhoR_p = m_p / (m_p + m_e) * rhoR
-rhoR_e = m_e / (m_p + m_e) * rhoR
+rhoL_p = rhoL
+rhoL_e = rhoL
+rhoR_p = rhoR
+rhoR_e = rhoR
+
+kappa_m = 1e-3
+kappa_q = 1e-3
+kappa_f = 1e50
 
 qL = numpy.array([rhoL_e, 0, 0, 0, epsL, rhoL_p, 0, 0, 0, epsL, Bx , ByL , BzL, 0, 0, 0, 0, 0 ])
 qR = numpy.array([rhoR_e, 0, 0, 0, epsR, rhoR_p, 0, 0, 0, epsR, Bx , ByR , BzR, 0, 0, 0, 0, 0 ])
 
 model_mf = sr_mf.sr_mf_gamma_law(initial_data = sr_mf.initial_riemann(qL, qR),
                                  gamma=gamma,
-                                 kappa_m = 0.01, kappa_f = 0.01, kappa_q = 0.001)
+                                 kappa_m = kappa_m,
+                                 kappa_f = kappa_f,
+                                 kappa_q = kappa_q)
 fast_source_mf  = model_mf.relaxation_source()
 
-sim_mf = simulation(model_mf, interval, fvs_method(2), imex222(fast_source_mf), 
+#sim_mf = simulation(model_mf, interval, fvs_method(2), imex222(fast_source_mf), 
+#                    outflow, cfl=0.25)
+sim_mf = simulation(model_mf, interval, vanleer_lf, imex222(fast_source_mf), 
                     outflow, cfl=0.25)
 
 qL = numpy.array([rhoL, 0, 0, 0, epsL, Bx , ByL , BzL, 0, 0, 0, 0, 0 ])

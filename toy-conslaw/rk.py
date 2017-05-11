@@ -119,7 +119,8 @@ def imex222(source, source_fprime=None, source_guess=None):
         for i in range(Np):
             cons1[:,i] = fsolve(residual1, consguess[:,i],
                                 fprime=residual1_prime,
-                                args=(dt, cons[:,i], prim[:,i], simulation))
+                                args=(dt, cons[:,i], prim[:,i], simulation),
+                                xtol = 1e-12)
         cons1 = simulation.bcs(cons1, simulation.grid.Npoints, simulation.grid.Ngz)
         prim1, aux1 = simulation.model.cons2all(cons1, prim)
         k1 = rhs(cons1, prim1, aux1, simulation)
@@ -128,7 +129,8 @@ def imex222(source, source_fprime=None, source_guess=None):
         for i in range(Np):
             cons2[:,i] = fsolve(residual2, cons1[:,i],
                                 fprime=residual1_prime, 
-                                args=(dt, cons[:,i], prim1[:,i], k1, source1[:,i], simulation))
+                                args=(dt, cons[:,i], prim1[:,i], k1, source1[:,i], simulation),
+                                xtol = 1e-12)
         cons2 = simulation.bcs(cons2, simulation.grid.Npoints, simulation.grid.Ngz)
         prim2, aux2 = simulation.model.cons2all(cons2, prim1)
         k2 = rhs(cons2, prim2, aux2, simulation)

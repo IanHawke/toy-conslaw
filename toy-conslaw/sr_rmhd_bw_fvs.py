@@ -34,7 +34,7 @@ epsR = pR / rhoR / (gamma - 1)
 qL = numpy.array([rhoL, 0, vyL, vzL, epsL, Bx , ByL , BzL, 0, 0, 0, 0, 0 ])
 qR = numpy.array([rhoR, 0, vyR, vzR, epsR, Bx , ByR , BzR, 0, 0, 0, 0, 0 ])
 
-sigma_s = [10**6, 0, 10, 10**2, 10**3] # Can't do 10^6 as KD does
+sigma_s = [0, 10, 10**2, 10**3] # Can't do 10^6 as KD does
 Bys = []
 for sigma in sigma_s:
     model = sr_rmhd.sr_rmhd_gamma_law(initial_data = sr_rmhd.initial_riemann(qL, qR),

@@ -12,7 +12,7 @@ from matplotlib import pyplot
 from cycler import cycler
 
 Ngz = 3
-Npoints = 50
+Npoints = 200
 L = 0.5
 interval = grid([-L, L], Npoints, Ngz)
 
@@ -38,7 +38,7 @@ rhoL_e = rhoL
 rhoR_p = rhoR
 rhoR_e = rhoR
 
-kappa_m = 1e-3
+kappa_m = 1e-2
 kappa_q = 1e-3
 kappa_f = 1e50
 
@@ -52,9 +52,7 @@ model_mf = sr_mf.sr_mf_gamma_law(initial_data = sr_mf.initial_riemann(qL, qR),
                                  kappa_q = kappa_q)
 fast_source_mf  = model_mf.relaxation_source()
 
-#sim_mf = simulation(model_mf, interval, fvs_method(2), imex222(fast_source_mf), 
-#                    outflow, cfl=0.25)
-sim_mf = simulation(model_mf, interval, vanleer_lf, imex222(fast_source_mf), 
+sim_mf = simulation(model_mf, interval, fvs_method(2), imex222(fast_source_mf), 
                     outflow, cfl=0.25)
 
 qL = numpy.array([rhoL, 0, 0, 0, epsL, Bx , ByL , BzL, 0, 0, 0, 0, 0 ])
@@ -68,7 +66,7 @@ qR = numpy.array([rhoR, 0, 0, 0, epsR, Bx , ByR , BzR, 0, 0, 0, 0, 0 ])
 #                    outflow, cfl=0.25)
                     
 
-sim_mf.evolve(0.4)
+sim_mf.evolve(0.019)
 #
 #fig = pyplot.figure()
 #ax = fig.add_subplot(121)

@@ -95,8 +95,8 @@ class sr_mf_gamma_law(object):
         aux[6, :] = B2
         aux[7, :] = E2
         aux[8:11, :] = EcrossB
-        J = ( self.mass_frac_p * rho_p * W_p * v_p - \
-              self.mass_frac_e * rho_e * W_e * v_e ) / self.kappa_q
+        J = ( rho_p * W_p * v_p - \
+              rho_e * W_e * v_e) / self.kappa_q
         rho = rho_p * W_p / self.mass_frac_p + rho_e * W_e / self.mass_frac_e
         v = rho_p * W_p * v_p / self.mass_frac_p + \
             rho_e * W_e * v_e / self.mass_frac_e
@@ -192,8 +192,8 @@ class sr_mf_gamma_law(object):
             aux[6, i] = B2
             aux[7, i] = E2
             aux[8:11, i] = EcrossB
-            J = ( self.mass_frac_p * rho_p * W_p * v_p - \
-                  self.mass_frac_e * rho_e * W_e * v_e ) / self.kappa_q
+            J = ( rho_p * W_p * v_p - \
+                  rho_e * W_e * v_e ) / self.kappa_q
             rho = rho_p * W_p / self.mass_frac_p + rho_e * W_e / self.mass_frac_e
             v = rho_p * W_p * v_p / self.mass_frac_p + \
                 rho_e * W_e * v_e / self.mass_frac_e

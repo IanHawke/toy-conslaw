@@ -69,6 +69,9 @@ class sr_mf_gamma_law(object):
         B2 = numpy.sum(B**2, axis=0)
         E2 = numpy.sum(E**2, axis=0)
         EcrossB = numpy.cross(E, B, axis=0)
+#        EcrossB[0,:] = E[1,:] * B[2,:] - E[2,:] * B[1,:]
+#        EcrossB[1,:] = E[2,:] * B[0,:] - E[0,:] * B[2,:]
+#        EcrossB[2,:] = E[0,:] * B[1,:] - E[1,:] * B[0,:]
         cons = numpy.zeros_like(prim)
         cons[0, :] = rho_e * W_e
         cons[1:4, :] = rho_p * h_p * W_p**2 * v_p - \
@@ -101,6 +104,9 @@ class sr_mf_gamma_law(object):
         v = rho_p * W_p * v_p / self.mass_frac_p + \
             rho_e * W_e * v_e / self.mass_frac_e
         vcrossB = numpy.cross(v, B, axis=0)
+#        vcrossB[0,:] = v[1,:] * B[2,:] - v[2,:] * B[1,:]
+#        vcrossB[1,:] = v[2,:] * B[0,:] - v[0,:] * B[2,:]
+#        vcrossB[2,:] = v[0,:] * B[1,:] - v[1,:] * B[0,:]
         aux[11:14, :] = J
         aux[14:17, :] = vcrossB
         aux[17:20, :] = v
@@ -128,6 +134,9 @@ class sr_mf_gamma_law(object):
             B = cons[10:13, i]
             E = cons[13:16, i]
             EcrossB = numpy.cross(E, B)
+#            EcrossB[0] = E[1,i] * B[2,i] - E[2,i] * B[1,i]
+#            EcrossB[1] = E[2,i] * B[0,i] - E[0,i] * B[2,i]
+#            EcrossB[2] = E[0,i] * B[1,i] - E[1,i] * B[0,i]
             B2 = numpy.sum(B**2)
             E2 = numpy.sum(E**2)
             D_e = cons[0, i]
@@ -198,6 +207,9 @@ class sr_mf_gamma_law(object):
             v = rho_p * W_p * v_p / self.mass_frac_p + \
                 rho_e * W_e * v_e / self.mass_frac_e
             vcrossB = numpy.cross(v, B)
+#            vcrossB[0] = v[1,i] * B[2,i] - v[2,i] * B[1,i]
+#            vcrossB[1] = v[2,i] * B[0,i] - v[0,i] * B[2,i]
+#            vcrossB[2] = v[0,i] * B[1,i] - v[1,i] * B[0,i]
             aux[11:14, i] = J
             aux[14:17, i] = vcrossB
             aux[17:20, i] = v

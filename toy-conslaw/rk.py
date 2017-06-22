@@ -106,7 +106,6 @@ def imex222(source, source_fprime=None, source_guess=None):
 #        jac -= dt * gamma * source_fprime(consguess, primguess, auxguess)
 #        return jac
     residual1_prime = None
-    residual2_prime = None
     def timestepper(simulation, cons, prim, aux):
         Np = cons.shape[1]
         dt = simulation.dt
@@ -137,38 +136,136 @@ def imex222(source, source_fprime=None, source_guess=None):
         source2 = source(cons2, prim2, aux2)
         return cons + simulation.dt * (k1 + k2 + source1 + source2) / 2
     return timestepper
-#
-#def imex433(source):
-#    def timestepper(simulation, cons):
-#        alpha = 0.24169426078821
-#        beta = 0.06042356519705
-#        eta = 0.12915286960590
-#        dt = simulation.dt
-#        rhs = simulation.rhs
-#        def residual1(consguess):
-#            return consguess - cons.ravel() - dt * alpha * source(consguess)
-#        consguess = cons.copy() + 0.5*dt*source(cons)
-#        cons1 = fsolve(residual1, consguess.ravel()).reshape(cons.shape)
-#        cons1 = simulation.bcs(cons1, simulation.grid.Npoints, simulation.grid.Ngz)
-##        k1 = rhs(cons1, simulation)
-#        source1 = source(cons1)
-#        def residual2(consguess):
-#            return consguess - cons.ravel() - dt * (-alpha*source1.ravel() + alpha*source(consguess))
-#        cons2 = fsolve(residual2, cons1.copy().ravel()).reshape(cons.shape)
-#        cons2 = simulation.bcs(cons2, simulation.grid.Npoints, simulation.grid.Ngz)
-#        k2 = rhs(cons2, simulation)
-#        source2 = source(cons2)
-#        def residual3(consguess):
-#            return consguess - cons.ravel() - dt * (k2.ravel() + (1 - alpha)*source2.ravel() + alpha*source(consguess))
-#        cons3 = fsolve(residual3, cons2.copy().ravel()).reshape(cons.shape)
-#        cons3 = simulation.bcs(cons3, simulation.grid.Npoints, simulation.grid.Ngz)
-#        k3 = rhs(cons3, simulation)
-#        source3 = source(cons3)
-#        def residual4(consguess):
-#            return consguess - cons.ravel() - dt * ((k2.ravel() + k3.ravel())/4 + beta*source1.ravel() + eta*source2.ravel() + (1/2-beta-eta-alpha)*source3.ravel() + alpha*source(consguess))
-#        cons4 = fsolve(residual4, cons3.copy().ravel()).reshape(cons.shape)
-#        cons4 = simulation.bcs(cons4, simulation.grid.Npoints, simulation.grid.Ngz)
-#        k4 = rhs(cons4, simulation)
-#        source4 = source(cons4)
-#        return cons + simulation.dt * (k2+k3+4*k4 + source2+source3+4*source4) / 6
-#    return timestepper
+
+def imex433(source):
+    alpha = 0.24169426078821
+    beta = 0.06042356519705
+    eta = 0.12915286960590
+    def residual1(consguess, dt, cons, prim, simulation):
+        consguess = consguess.reshape((cons.shape[0], 1))
+        cons = cons.reshape((cons.shape[0], 1))
+        prim = prim.reshape((prim.shape[0], 1))
+        try:
+            primguess, auxguess = simulation.model.cons2all(consguess, prim)
+        except ValueError:
+            res = 1e6 * numpy.ones_like(consguess)
+            return res.ravel()
+        res = consguess - cons - dt * alpha * source(consguess, 
+                                                     primguess, auxguess)
+        if numpy.any(numpy.isnan(res)):
+            res = 1e6 * numpy.ones_like(consguess)
+        return res.ravel()
+    def residual2(consguess, dt, cons, prim, source1, simulation):
+        consguess = consguess.reshape((cons.shape[0], 1))
+        cons = cons.reshape((cons.shape[0], 1))
+        prim = prim.reshape((prim.shape[0], 1))
+        source1 = source1.reshape((source1.shape[0], 1))
+        try:
+            primguess, auxguess = simulation.model.cons2all(consguess, prim)
+        except ValueError:
+            res = 1e6 * numpy.ones_like(consguess)
+            return res.ravel()
+        res = consguess - cons - dt * (-alpha*source1 + alpha*source(consguess,
+                                                                     primguess,
+                                                                     auxguess))
+        if numpy.any(numpy.isnan(res)):
+            res = 1e6 * numpy.ones_like(consguess)
+        return res.ravel()
+    def residual3(consguess, dt, cons, prim, source2, k2, simulation):
+        consguess = consguess.reshape((cons.shape[0], 1))
+        cons = cons.reshape((cons.shape[0], 1))
+        prim = prim.reshape((prim.shape[0], 1))
+        source2 = source2.reshape((source2.shape[0], 1))
+        k2 = k2.reshape((k2.shape[0], 1))
+        try:
+            primguess, auxguess = simulation.model.cons2all(consguess, prim)
+        except ValueError:
+            res = 1e6 * numpy.ones_like(consguess)
+            return res.ravel()
+        res = consguess - cons - dt * (k2 + (1-alpha)*source2 + alpha*source(consguess,
+                                                                             primguess,
+                                                                             auxguess))
+        if numpy.any(numpy.isnan(res)):
+            res = 1e6 * numpy.ones_like(consguess)
+        return res.ravel()
+    def residual4(consguess, dt, cons, prim, source1, source2, source3, 
+                  k2, k3, simulation):
+        consguess = consguess.reshape((cons.shape[0], 1))
+        cons = cons.reshape((cons.shape[0], 1))
+        prim = prim.reshape((prim.shape[0], 1))
+        source1 = source1.reshape((source1.shape[0], 1))
+        source2 = source2.reshape((source2.shape[0], 1))
+        source3 = source3.reshape((source3.shape[0], 1))
+        k2 = k2.reshape((k2.shape[0], 1))
+        k3 = k3.reshape((k3.shape[0], 1))
+        try:
+            primguess, auxguess = simulation.model.cons2all(consguess, prim)
+        except ValueError:
+            res = 1e6 * numpy.ones_like(consguess)
+            return res.ravel()
+        res = consguess - cons - \
+            dt * ((k2 + k3)/4 + beta*source1 + eta*source2 + \
+                  (1/2-beta-eta-alpha)*source3 + alpha*source(consguess,
+                                                              primguess,
+                                                              auxguess))
+        if numpy.any(numpy.isnan(res)):
+            res = 1e6 * numpy.ones_like(consguess)
+        return res.ravel()
+    residual1_prime = None
+    residual2_prime = None
+    residual3_prime = None
+    residual4_prime = None
+    def timestepper(simulation, cons, prim, aux):
+        Np = cons.shape[1]
+        dt = simulation.dt
+        rhs = simulation.rhs
+        consguess = cons.copy()
+        
+        cons1 = numpy.zeros_like(cons)
+        for i in range(Np):
+            cons1[:,i] = fsolve(residual1, consguess[:,i],
+                                fprime=residual1_prime,
+                                args=(dt, cons[:,i], prim[:,i], simulation),
+                                xtol = 1e-12)
+        cons1 = simulation.bcs(cons1, simulation.grid.Npoints, simulation.grid.Ngz)
+        prim1, aux1 = simulation.model.cons2all(cons1, prim)
+#        k1 = rhs(cons1, prim1, aux1, simulation)
+        source1 = source(cons1, prim1, aux1)
+        cons2 = numpy.zeros_like(cons)
+        for i in range(Np):
+            cons2[:,i] = fsolve(residual2, cons1[:,i],
+                                fprime=residual2_prime,
+                                args=(dt, cons[:,i], prim[:,i], source1[:,i], 
+                                      simulation),
+                                xtol = 1e-12)
+        cons2 = simulation.bcs(cons2, simulation.grid.Npoints, simulation.grid.Ngz)
+        prim2, aux2 = simulation.model.cons2all(cons2, prim)
+        k2 = rhs(cons2, prim2, aux2, simulation)
+        source2 = source(cons2, prim2, aux2)
+        cons3 = numpy.zeros_like(cons)
+        for i in range(Np):
+            cons3[:,i] = fsolve(residual3, cons2[:,i],
+                                fprime=residual3_prime,
+                                args=(dt, cons[:,i], prim[:,i], source2[:,i], 
+                                      k2[:,i],
+                                      simulation),
+                                xtol = 1e-12)
+        cons3 = simulation.bcs(cons3, simulation.grid.Npoints, simulation.grid.Ngz)
+        prim3, aux3 = simulation.model.cons2all(cons2, prim)
+        k3 = rhs(cons3, prim3, aux3, simulation)
+        source3 = source(cons3, prim3, aux3)
+        cons4 = numpy.zeros_like(cons)
+        for i in range(Np):
+            cons4[:,i] = fsolve(residual4, cons3[:,i],
+                                fprime=residual4_prime,
+                                args=(dt, cons[:,i], prim[:,i], source1[:,i],
+                                      source2[:,i], source3[:,i], k2[:,i], k3[:,i],
+                                      simulation),
+                                xtol = 1e-12)
+        cons4 = simulation.bcs(cons4, simulation.grid.Npoints, simulation.grid.Ngz)
+        prim4, aux4 = simulation.model.cons2all(cons4, prim)
+        k4 = rhs(cons4, prim4, aux4, simulation)
+        source4 = source(cons4, prim4, aux2)
+        
+        return cons + simulation.dt * (k2+k3+4*k4 + source2+source3+4*source4) / 6
+    return timestepper

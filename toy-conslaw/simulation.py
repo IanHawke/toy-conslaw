@@ -30,8 +30,8 @@ class simulation(object):
     def evolve_step(self, t_end):
         alpha = self.model.max_lambda(self.cons, self.prim, self.aux)
         self.dt = self.cfl * self.dx / alpha
-        if self.timestep < 5:
-            self.dt *= 0.1
+#        if self.timestep < 5:
+#            self.dt *= 0.1
         if self.t + self.dt > t_end:
             self.dt = t_end - self.t
         self.cons = self.timestepper(self, self.cons, self.prim, self.aux)

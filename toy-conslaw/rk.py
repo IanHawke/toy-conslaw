@@ -48,8 +48,8 @@ def rk_backward_euler_split(rk_method, source):
             return (consguess - cons_star - simulation.dt*source(consguess, primguess, auxguess)).ravel()
         consnext = numpy.zeros_like(cons)
         cons_initial_guess = consstar + \
-                          0.5*simulation.dt*source(consstar, 
-                                                   primstar, 
+                          0.5*simulation.dt*source(consstar,
+                                                   primstar,
                                                    auxstar)
         for i in range(cons.shape[1]):
             consnext[:, i] = fsolve(residual, cons_initial_guess[:,i].ravel(),
@@ -68,7 +68,7 @@ def imex222(source, source_fprime=None, source_guess=None):
         except ValueError:
             res = 1e6 * numpy.ones_like(consguess)
             return res.ravel()
-        res = consguess - cons - dt * gamma * source(consguess, 
+        res = consguess - cons - dt * gamma * source(consguess,
                                                      primguess, auxguess)
         if numpy.any(numpy.isnan(res)):
             res = 1e6 * numpy.ones_like(consguess)
@@ -77,8 +77,8 @@ def imex222(source, source_fprime=None, source_guess=None):
         consguess = consguess.reshape((cons.shape[0], 1))
         cons = cons.reshape((cons.shape[0], 1))
         prim = prim.reshape((prim.shape[0], 1))
-        k1 = cons.reshape((k1.shape[0], 1))
-        source1 = cons.reshape((source1.shape[0], 1))
+        k1 = k1.reshape((k1.shape[0], 1))
+        source1 = source1.reshape((source1.shape[0], 1))
         try:
             primguess, auxguess = simulation.model.cons2all(consguess, prim)
         except ValueError:
@@ -127,7 +127,7 @@ def imex222(source, source_fprime=None, source_guess=None):
         cons2 = numpy.zeros_like(cons)
         for i in range(Np):
             cons2[:,i] = fsolve(residual2, cons1[:,i],
-                                fprime=residual1_prime, 
+                                fprime=residual1_prime,
                                 args=(dt, cons[:,i], prim1[:,i], k1, source1[:,i], simulation),
                                 xtol = 1e-12)
         cons2 = simulation.bcs(cons2, simulation.grid.Npoints, simulation.grid.Ngz)
@@ -150,7 +150,7 @@ def imex433(source):
         except ValueError:
             res = 1e6 * numpy.ones_like(consguess)
             return res.ravel()
-        res = consguess - cons - dt * alpha * source(consguess, 
+        res = consguess - cons - dt * alpha * source(consguess,
                                                      primguess, auxguess)
         if numpy.any(numpy.isnan(res)):
             res = 1e6 * numpy.ones_like(consguess)
@@ -188,7 +188,7 @@ def imex433(source):
         if numpy.any(numpy.isnan(res)):
             res = 1e6 * numpy.ones_like(consguess)
         return res.ravel()
-    def residual4(consguess, dt, cons, prim, source1, source2, source3, 
+    def residual4(consguess, dt, cons, prim, source1, source2, source3,
                   k2, k3, simulation):
         consguess = consguess.reshape((cons.shape[0], 1))
         cons = cons.reshape((cons.shape[0], 1))
@@ -220,7 +220,7 @@ def imex433(source):
         dt = simulation.dt
         rhs = simulation.rhs
         consguess = cons.copy()
-        
+
         cons1 = numpy.zeros_like(cons)
         for i in range(Np):
             cons1[:,i] = fsolve(residual1, consguess[:,i],
@@ -235,7 +235,7 @@ def imex433(source):
         for i in range(Np):
             cons2[:,i] = fsolve(residual2, cons1[:,i],
                                 fprime=residual2_prime,
-                                args=(dt, cons[:,i], prim[:,i], source1[:,i], 
+                                args=(dt, cons[:,i], prim[:,i], source1[:,i],
                                       simulation),
                                 xtol = 1e-12)
         cons2 = simulation.bcs(cons2, simulation.grid.Npoints, simulation.grid.Ngz)
@@ -246,7 +246,7 @@ def imex433(source):
         for i in range(Np):
             cons3[:,i] = fsolve(residual3, cons2[:,i],
                                 fprime=residual3_prime,
-                                args=(dt, cons[:,i], prim[:,i], source2[:,i], 
+                                args=(dt, cons[:,i], prim[:,i], source2[:,i],
                                       k2[:,i],
                                       simulation),
                                 xtol = 1e-12)
@@ -266,6 +266,6 @@ def imex433(source):
         prim4, aux4 = simulation.model.cons2all(cons4, prim)
         k4 = rhs(cons4, prim4, aux4, simulation)
         source4 = source(cons4, prim4, aux2)
-        
+
         return cons + simulation.dt * (k2+k3+4*k4 + source2+source3+4*source4) / 6
     return timestepper

@@ -11,7 +11,7 @@ from matplotlib import pyplot
 from cycler import cycler
 
 Ngz = 3
-Npoints = 200
+Npoints = 50
 L = 0.5
 interval = grid([-L, L], Npoints, Ngz)
 

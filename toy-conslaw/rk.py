@@ -74,8 +74,6 @@ def imex222(source, source_fprime=None, source_guess=None):
             res = 1e6 * numpy.ones_like(consguess)
         return res.ravel()
     def residual2(consguess, dt, cons, prim, k1, source1, simulation):
-        #for i, (c, k) in enumerate(zip(consguess, k1)):
-        #    print("res2 internal", i, c, k)
         consguess = consguess.reshape((cons.shape[0], 1))
         cons = cons.reshape((cons.shape[0], 1))
         prim = prim.reshape((prim.shape[0], 1))
@@ -92,8 +90,6 @@ def imex222(source, source_fprime=None, source_guess=None):
             res = 1e6 * numpy.ones_like(consguess)
         return res
     def residual2_noflux(consguess, dt, cons, prim, source1, simulation):
-        #for i, c in enumerate(consguess):
-        #    print("res2_noflux internal", i, c)
         consguess = consguess.reshape((cons.shape[0], 1))
         cons = cons.reshape((cons.shape[0], 1))
         prim = prim.reshape((prim.shape[0], 1))
@@ -107,7 +103,6 @@ def imex222(source, source_fprime=None, source_guess=None):
             gamma*source(consguess, primguess, auxguess))).ravel()
         if numpy.any(numpy.isnan(res)):
             res = 1e6 * numpy.ones_like(consguess)
-        #print("res2_noflux residual", numpy.linalg.norm(res))
         return res
 #    def residual1_prime(consguess, dt, cons, prim, simulation):
 #        consguess = consguess.reshape((cons.shape[0], 1))
@@ -146,18 +141,16 @@ def imex222(source, source_fprime=None, source_guess=None):
         source1 = source(cons1, prim1, aux1)
         cons2 = numpy.zeros_like(cons)
         for i in range(Np):
-            #print("res2, first part, i", i)
-            consguess = fsolve(residual2_noflux, cons1[:,i],
+            consguess_source = fsolve(residual2_noflux, cons1[:,i],
                                 fprime=residual1_prime,
                                 args=(dt, cons[:,i], prim1[:,i], source1[:,i], simulation),
                                 xtol = 1e-12)
-            consguess = 0.5 * (consguess + cons1[:,i] + dt * k1[:, i])
-            #print("res2, second part, i", i, consguess)
+            consguess_flux = cons1[:,i] + dt * k1[:, i]
+            consguess = 0.5 * (consguess_source + consguess_flux)
             cons2[:,i] = fsolve(residual2, consguess,
                                 fprime=residual1_prime,
                                 args=(dt, cons[:,i], prim1[:,i], k1[:,i], source1[:,i], simulation),
                                 xtol = 1e-12)
-        #print("Done res2")
         cons2 = simulation.bcs(cons2, simulation.grid.Npoints, simulation.grid.Ngz)
         prim2, aux2 = simulation.model.cons2all(cons2, prim1)
         k2 = rhs(cons2, prim2, aux2, simulation)

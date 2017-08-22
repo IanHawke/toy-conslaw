@@ -12,7 +12,7 @@ from matplotlib import pyplot
 from cycler import cycler
 
 Ngz = 3
-Npoints = 200
+Npoints = 100
 L = 0.5
 interval = grid([-L, L], Npoints, Ngz)
 
@@ -66,7 +66,7 @@ qR = numpy.array([rhoR, 0, 0, 0, epsR, Bx , ByR , BzR, 0, 0, 0, 0, 0 ])
 #                    outflow, cfl=0.25)
                     
 
-sim_mf.evolve(0.019)
+sim_mf.evolve(0.4)
 #
 #fig = pyplot.figure()
 #ax = fig.add_subplot(121)

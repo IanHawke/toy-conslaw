@@ -87,7 +87,7 @@ def imex222(source, source_fprime=None, source_guess=None):
         res = (consguess - cons - dt * (k1 + (1 - 2*gamma)*source1 + \
             gamma*source(consguess, primguess, auxguess))).ravel()
         if numpy.any(numpy.isnan(res)):
-            res = 1e6 * numpy.ones_like(consguess)
+            res = 1e6 * numpy.ones_like(consguess).ravel()
         return res
     def residual2_noflux(consguess, dt, cons, prim, source1, simulation):
         consguess = consguess.reshape((cons.shape[0], 1))
@@ -102,7 +102,7 @@ def imex222(source, source_fprime=None, source_guess=None):
         res = (consguess - cons - dt * ((1 - 2*gamma)*source1 + \
             gamma*source(consguess, primguess, auxguess))).ravel()
         if numpy.any(numpy.isnan(res)):
-            res = 1e6 * numpy.ones_like(consguess)
+            res = 1e6 * numpy.ones_like(consguess).ravel()
         return res
 #    def residual1_prime(consguess, dt, cons, prim, simulation):
 #        consguess = consguess.reshape((cons.shape[0], 1))
